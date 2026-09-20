@@ -1,12 +1,13 @@
+
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-TVBox 仓库全量更新 v4 —— 品牌版（服务器端纯版）
+TVBox 浠搴�ㄩ�存� v4 �ü�ü ���锛��″ㄧ�绾�锛
 ============================================================
-- 在服务器上直接运行（无 paramiko 依赖）
-- 测试所有接口可用性
-- 所有线路统一添加 " ·" 品牌前缀
-- 写入 /opt/iptv/tvbox/repo.json + 更新 index.html
+- �ㄦ�″ㄤ��存ヨ�琛锛�  paramiko 渚璧锛
+- 娴璇�ü��ュｅ�ㄦü�
+- �ü�绾胯矾缁涓ü娣诲  " 路" ���缂ü
+- ��� /opt/iptv/tvbox/repo.json + �存� index.html
 """
 import json
 import time
@@ -15,19 +16,19 @@ from urllib.parse import quote
 from urllib.request import urlopen, Request
 from urllib.error import HTTPError
 
-# ===================== 品牌设置 =====================
+# ===================== ��璁剧疆 =====================
 BRAND_NAME = ""
 
 def get_branded_name(raw_name):
-    """将原始名称统一包装为  · xxx"""
+    """灏�濮�绉扮�涓ü�瑁涓�  路 xxx"""
     clean_name = raw_name.strip()
     if BRAND_NAME in clean_name:
         return clean_name
-    return f"{BRAND_NAME} · {clean_name}"
+    return f"{BRAND_NAME} 路 {clean_name}"
 
 
 def encode_url(url):
-    """处理中文域名（IDNA 编码）"""
+    """澶�涓���锛IDNA 缂� 锛"""
     if '://' not in url:
         return url
     scheme, rest = url.split('://', 1)
@@ -46,63 +47,63 @@ def encode_url(url):
             return url
 
 
-# ===================== 待测资源列表 =====================
-# 说明：raw.githubusercontent.com 源加国内加速代理前缀（国内 TVBox 直接拉 GitHub 常失败）
-# 代理：ghfast.top / ghproxy.net 双备选
+# ===================== 寰娴璧婧�琛� =====================
+# 璇存锛raw.githubusercontent.com 婧� �藉� �ü浠ｇ�缂ü锛�藉 TVBox �存ユ GitHub 甯稿け璐ワ�
+# 浠ｇ锛ghfast.top / ghproxy.net �澶�ü
 GH = "https://ghfast.top/https://raw.githubusercontent.com/"
 GH2 = "https://ghproxy.net/https://raw.githubusercontent.com/"
 
 URLS_TO_TEST = [
-    # --- 【1. 普通点播源】 ---
-    {"name": "🎬 肥猫(.net)", "url": "http://肥猫.net", "type": "single"},
-    {"name": "🎬 饭太硬(.net)", "url": "http://www.饭太硬.net/tv", "type": "single"},
-    {"name": "🎬 王小二(新)", "url": "https://9280.kstore.vip/newwex.json", "type": "single"},
-    {"name": "🎬 挺好分享", "url": "http://ztha.top/TVBox/thdjk.json", "type": "single"},
-    {"name": "🎬 驸马", "url": "http://fmys.top/fmys.json", "type": "single"},
-    {"name": "🎬 刘备", "url": "https://raw.liucn.cc/box/m.json", "type": "single"},
-    {"name": "🎬 dxawi", "url": GH + "dxawi/0/main/0.json", "type": "single"},
-    {"name": "🎬 香雅情", "url": GH + "xyq254245/xyqonlinerule/main/XYQTVBox.json", "type": "single"},
-    {"name": "🎬 非凡", "url": "https://g.3344550.xyz/" + GH2 + "jigedos/1024/master/jsm.json", "type": "single"},
-    {"name": "🎬 英雄", "url": GH + "xuexuguang/tvbox_spider/main/tv/kk/heroaku_dtes.json", "type": "single"},
-    {"name": "🎬 高天流云", "url": GH2 + "gaotianliuyun/gao/master/js.json", "type": "single"},
-    {"name": "🎬 小屋", "url": "https://git.acwing.com/shhentu/lzxw/-/raw/main/Monster.json", "type": "single"},
-    {"name": "🎬 小盒子", "url": "http://xhztv.top/xhz", "type": "single"},
-    {"name": "🎬 小盒子4K", "url": "http://xhztv.top/4k.json", "type": "single"},
-    {"name": "🎬 哈基米", "url": "https://17264.kstore.space/哈基米.png", "type": "single"},
-    {"name": "🎬 动漫城", "url": "https://www.yingm.cc/dm/dm.json", "type": "single"},
-    {"name": "🎬 HG接口", "url": "https://api.hgyx.vip/hgyx.json", "type": "single"},
-    {"name": "🎬 潇洒", "url": "https://9877.kstore.space/ONE/one.json", "type": "single"},
-    {"name": "🎬 小苹果", "url": "https://bitbucket.org/xduo/duoapi/raw/master/xpg.json", "type": "single"},
-    {"name": "🎬 宝盒VIP", "url": GH + "guot55/YGBH/main/vip2.json", "type": "single"},
-    {"name": "🎬 欧歌", "url": "https://xn--anna-wn6lw489o.v.nxog.top/m/", "type": "single", "force": True},
-    {"name": "🎬 真心", "url": "https://www.252035.xyz/z/FongMi.json", "type": "single"},
-    {"name": "🎬 分享", "url": GH2 + "maoystv/6/main/000.json", "type": "single"},
-    {"name": "🎬 短剧", "url": "https://cnb.cool/fish2018/duanju/-/git/raw/main/tvbox.json", "type": "single"},
-    {"name": "🎬 东篱线路", "url": GH + "chitue/dongliTV/main/api.json", "type": "single"},
-    {"name": "🎬 嗷呜线路", "url": "https://cnb.cool/aooooowuuuuu/FreeSpider/-/git/raw/main/config", "type": "single"},
-    {"name": "🎬 L佬线路", "url": "https://android.lushunming.qzz.io/json/index.json", "type": "single"},
-    {"name": "🎬 苹果CMS", "url": "https://pastebin.com/raw/gtbKvnE1", "type": "single"},
-    {"name": "🎬 CandyMuj", "url": "https://tv.520993.xyz/candymuj.json", "type": "single"},
-    {"name": "🎬 CandyMuj(无福利)", "url": "https://tv.520993.xyz/candymuj1.json", "type": "single"},
-    {"name": "🎬 tvyuan全量版", "url": "https://tv.cc0cd.cc.cd", "type": "single"},
-    {"name": "🎬 菜妮丝", "url": "https://tv.xn--yhqu5zs87a.top", "type": "single"},
-    {"name": "🎬 龙伊", "url": "https://xn--qoqw77q.top/", "type": "single"},
+    # --- �ü1. ��ü�规���ü ---
+    {"name": "�� �ョ�", "url": "http://�ョ�.net", "type": "single", "force": True},
+    {"name": "�� 楗�お纭�", "url": "http://www.楗�お纭�.net/tv", "type": "single", "force": True},
+    {"name": "�� �灏浜(��)", "url": "https://9280.kstore.vip/newwex.json", "type": "single"},
+    {"name": "�� �哄ソ�浜�", "url": "http://ztha.top/TVBox/thdjk.json", "type": "single"},
+    {"name": "�� 椹搁┈", "url": "http://fmys.top/fmys.json", "type": "single"},
+    {"name": "�� �澶", "url": "https://raw.liucn.cc/box/m.json", "type": "single", "force": True},
+    {"name": "�� dxawi", "url": GH + "dxawi/0/main/0.json", "type": "single"},
+    {"name": "�� 棣��", "url": GH + "xyq254245/xyqonlinerule/main/XYQTVBox.json", "type": "single"},
+    {"name": "�� ���", "url": "https://g.3344550.xyz/" + GH2 + "jigedos/1024/master/jsm.json", "type": "single"},
+    {"name": "�� �遍", "url": GH + "xuexuguang/tvbox_spider/main/tv/kk/heroaku_dtes.json", "type": "single"},
+    {"name": "�� 楂澶╂�浜", "url": GH2 + "gaotianliuyun/gao/master/js.json", "type": "single"},
+    {"name": "�� 灏灞", "url": "https://git.acwing.com/shhentu/lzxw/-/raw/main/Monster.json", "type": "single"},
+    {"name": "�� 灏�瀛", "url": "http://xhztv.top/xhz", "type": "single", "force": True},
+    {"name": "�� 灏�瀛4K", "url": "http://xhztv.top/4k.json", "type": "single", "force": True},
+    {"name": "�� ��虹背", "url": "https://17264.kstore.space/��虹背.png", "type": "single"},
+    {"name": "�� �ㄦ极�", "url": "https://www.yingm.cc/dm/dm.json", "type": "single"},
+    {"name": "�� HG�ュ�", "url": "https://api.hgyx.vip/hgyx.json", "type": "single"},
+    {"name": "�� 娼娲", "url": "https://9877.kstore.space/ONE/one.json", "type": "single"},
+    {"name": "�� 灏�规", "url": "https://bitbucket.org/xduo/duoapi/raw/master/xpg.json", "type": "single"},
+    {"name": "�� 瀹�VIP", "url": GH + "guot55/YGBH/main/vip2.json", "type": "single"},
+    {"name": "�� 娆ф�", "url": "https://xn--anna-wn6lw489o.v.nxog.top/m/", "type": "single", "force": True},
+    {"name": "�� �蹇", "url": "https://www.252035.xyz/z/FongMi.json", "type": "single"},
+    {"name": "�� �浜�", "url": GH2 + "maoystv/6/main/000.json", "type": "single"},
+    {"name": "�� ���", "url": "https://cnb.cool/fish2018/duanju/-/git/raw/main/tvbox.json", "type": "single"},
+    {"name": "�� 涓绡辩嚎璺�", "url": GH + "chitue/dongliTV/main/api.json", "type": "single"},
+    {"name": "�� �峰绾胯矾", "url": "https://cnb.cool/aooooowuuuuu/FreeSpider/-/git/raw/main/config", "type": "single"},
+    {"name": "�� L浣�嚎璺�", "url": "https://android.lushunming.qzz.io/json/index.json", "type": "single"},
+    {"name": "�� �规CMS", "url": "https://pastebin.com/raw/gtbKvnE1", "type": "single"},
+    {"name": "�� CandyMuj", "url": "https://tv.520993.xyz/candymuj.json", "type": "single"},
+    {"name": "�� CandyMuj(� 绂��)", "url": "https://tv.520993.xyz/candymuj1.json", "type": "single"},
+    {"name": "�� tvyuan�ㄩ�", "url": "https://tv.cc0cd.cc.cd", "type": "single"},
+    {"name": "�� �濡��", "url": "https://tv.xn--yhqu5zs87a.top", "type": "single"},
+    {"name": "�� 榫浼", "url": "https://xn--qoqw77q.top/", "type": "single"},
 
-    # --- 【3. 多仓源】 ---
-    {"name": "🏬 小盒子多仓", "url": "http://xhztv.top/dc/", "type": "multi"},
-    {"name": "🏬 拾光多仓", "url": "http://xmbjm.fh4u.org/dc.txt", "type": "multi"},
+    # --- �ü3. 澶浠婧�ü ---
+    {"name": "�� 灏�瀛澶浠", "url": "http://xhztv.top/dc/", "type": "multi"},
+    {"name": "�� �惧澶浠", "url": "http://xmbjm.fh4u.org/dc.txt", "type": "multi"},
 
-    # --- 【4. 外部直播源】 ---
-    {"name": "📺 悦然直播", "url": GH + "YueChan/Live/refs/heads/main/IPTV.m3u", "type": "live"},
-    {"name": "🌍 悦然全球", "url": GH + "YueChan/Live/refs/heads/main/Global.m3u", "type": "live"},
-    {"name": "📡 直播电视IPV4", "url": "https://live.zbds.top/tv/iptv4.txt", "type": "live"},
-    {"name": "🛰️ 国云直播", "url": GH2 + "Guovin/iptv-api/gd/output/result.m3u", "type": "live"},
-    {"name": "📺 苏翔直播", "url": GH + "suxuang/myIPTV/refs/heads/main/ipv4.m3u", "type": "live"},
+    # --- �ü4. 澶�ㄧ存���ü ---
+    {"name": "�� �︾剁存�", "url": GH + "YueChan/Live/refs/heads/main/IPTV.m3u", "type": "live"},
+    {"name": "� �︾跺ㄧ", "url": GH + "YueChan/Live/refs/heads/main/Global.m3u", "type": "live"},
+    {"name": "�� �存�佃�IPV4", "url": "https://live.zbds.top/tv/iptv4.txt", "type": "live"},
+    {"name": "�帮� �戒��存�", "url": GH2 + "Guovin/iptv-api/gd/output/result.m3u", "type": "live"},
+    {"name": "�� �缈�存�", "url": GH + "suxuang/myIPTV/refs/heads/main/ipv4.m3u", "type": "live"},
 ]
 
 
 def test_url(item):
-    """严格校验：GET 内容 + 类型检查（TVBox 解析兼容性）"""
+    """涓ユ 兼 ¢�锛GET �瀹� + 绫诲妫ü�ワ�TVBox 瑙ｆ�煎��üэ�"""
     url = encode_url(item["url"])
     name = item["name"]
     try:
@@ -132,9 +133,9 @@ def test_url(item):
 
 def main():
     print("=" * 70)
-    print(f"📺 {BRAND_NAME} | TVBox 仓库全量更新 v4（服务器端）")
+    print(f"�� {BRAND_NAME} | TVBox 浠搴�ㄩ�存� v4锛��″ㄧ�锛")
     print("=" * 70)
-    print("正在测试所有接口可用性...")
+    print("姝ｅㄦ�璇�ü��ュｅ�ㄦü�...")
     print()
 
     results = []
@@ -143,45 +144,45 @@ def main():
         for future in concurrent.futures.as_completed(future_to_url):
             result = future.result()
             results.append(result)
-            status_icon = "✅" if result[3] in ("OK-JSON", "OK-M3U", "OK-TXT") else "❌"
+            status_icon = "�" if result[3] in ("OK-JSON", "OK-M3U", "OK-TXT") else "�"
             print(f"{status_icon} {result[0][:30]:<30} HTTP {result[2]:<4} {result[3]}")
 
-    # 只保留内容类型校验通过（OK-JSON/OK-M3U/OK-TXT）的线路 + force 标记的（用户确认可用）
+    # �����瀹圭被�� ¢��ü杩锛OK-JSON/OK-M3U/OK-TXT锛�绾胯矾 + force � 璁扮锛�ㄦ风‘璁ゅ���
     force_names = {item["name"] for item in URLS_TO_TEST if item.get("force")}
     ok_results = [r for r in results if r[3] in ("OK-JSON", "OK-M3U", "OK-TXT") or r[0] in force_names]
     fail_results = [r for r in results if r[3] not in ("OK-JSON", "OK-M3U", "OK-TXT") and r[0] not in force_names]
 
     print("\n" + "=" * 70)
-    print(f"✅ 可用: {len(ok_results)} / {len(results)}")
-    print(f"❌ 不可用: {len(fail_results)} / {len(results)}")
+    print(f"� ���: {len(ok_results)} / {len(results)}")
+    print(f"� 涓���: {len(fail_results)} / {len(results)}")
     print("=" * 70)
 
-    # 分类（famous 也归入 single）
+    # �绫伙�famous 涔褰�� single锛
     single_ok = [r for r in ok_results if r[4] in ("single", "famous")]
     multi_ok = [r for r in ok_results if r[4] == "multi"]
     live_ok = [r for r in ok_results if r[4] == "live"]
 
-    # ===================== 构建品牌仓库 =====================
+    # ===================== �寤哄�浠搴 =====================
     urls = []
 
-    # 1) 多仓源（品牌化）
+    # 1) 澶浠婧锛���锛
     for r in multi_ok:
         urls.append({"name": get_branded_name(r[0]), "url": r[1]})
 
-    # 2) 单仓源
+    # 2) �浠婧
     for r in single_ok:
         urls.append({"name": get_branded_name(r[0]), "url": r[1]})
 
-    # 3) 外部直播源：不再加入仓库（"线路归线路，直播自己配"）
-    #    直播请直接在 TVBox 直播页添加 m3u 源：
-    #      http://YOUR_SERVER_IP/m3u/all.m3u   （直播总源，16324 频道 29 分组）
-    #      http://YOUR_SERVER_IP/m3u/cn.m3u    （国内精简版，1588 频道）
-    #    live_ok 仅保留统计用途
+    # 3) 澶�ㄧ存��锛涓�� �ヤ�搴锛"绾胯矾褰绾胯矾锛�存��繁�"锛
+    #    �存���存ュ� TVBox �存�〉娣诲  m3u 婧锛
+    #      http://YOUR_SERVER_IP/m3u/all.m3u   锛�存�ü绘�锛16324 棰� 29 �缁锛
+    #      http://YOUR_SERVER_IP/m3u/cn.m3u    锛�藉绮剧�ü�锛1588 棰�锛
+    #    live_ok 浠淇�缁璁＄ㄩü
 
-    # 4) 自建直播源（品牌化命名，频道数动态读取）
-    # TVBox 多仓选线路时要求每个线路是【完整 TVBox 配置 JSON】。
-    # 借鉴欧歌/主流线路的 lives 格式：每个 live 必须带 type/playerType/timeout 等字段，
-    # 否则部分 TVBox 版本静默忽略，导致"选线路不报错但直播不显示"。
+    # 4) ��缓�存��锛����藉锛棰��板ㄦü璇诲锛
+    # TVBox 澶浠�ü绾胯矾�惰�姹姣涓�嚎璺��ü瀹�� TVBox �缃� JSON�ü�ü
+    # �ü�存�姝/涓绘�绾胯矾� lives � 煎�锛姣涓� live 蹇椤诲甫 type/playerType/timeout 绛瀛娈碉�
+    # �﹀�ㄥ TVBox ���榛蹇界ワ�瀵艰�"�ü绾胯矾涓�ラ浣�存���剧ず"�ü
     def count_channels(m3u_name):
         try:
             with open(f"/opt/iptv/m3u/{m3u_name}", 'r', encoding='utf-8') as f:
@@ -190,7 +191,7 @@ def main():
             return 0
 
     def make_live(name, m3u_path, epg_url=""):
-        """构造 TVBox 标准 live 条目（模仿欧歌格式）"""
+        """��ü  TVBox � � live �＄��妯′豢娆ф�� 煎�锛"""
         live = {
             "name": name,
             "type": 0,
@@ -202,19 +203,19 @@ def main():
             live["epg"] = epg_url
         return live
 
-    def write_live_config(json_name, lives, cfg_name="直播"):
-        """写入完整 TVBox 直播配置 JSON。
+    def write_live_config(json_name, lives, cfg_name="�存�"):
+        """��ュ��� TVBox �存�缃� JSON�ü
 
-        重要：必须以"欧歌基座"（spider 完整URL + 127个sites + parses）为模板，
-        只替换 lives。实测影视仓多仓选线路时，若配置 sites 为空 / spider 为空，
-        会判定配置无效而整体忽略（含 lives），导致"选线路不报错但直播不显示"。
-        欧歌/驸马/饭太硬等能正常显示直播的配置，全部是 spider+sites+lives 齐全的。
+        �瑕锛蹇椤讳互"娆ф��哄骇"锛spider 瀹��URL + 127涓�sites + parses锛涓烘ā�匡�
+        ��挎� lives�ü瀹娴褰辫�浠澶浠�ü绾胯矾�讹��ラ缃� sites 涓虹┖ / spider 涓虹┖锛
+        浼�ゅ��缃� ��ü�翠�蹇界ワ��� lives锛锛瀵艰�"�ü绾胯矾涓�ラ浣�存���剧ず"�ü
+        娆ф�/椹搁┈/楗�お纭���芥�甯告剧ず�存��缃���ㄩㄦ� spider+sites+lives 榻�ㄧ�ü
         """
         try:
             with open("/opt/iptv/tvbox/ouge_base.json", "r", encoding="utf-8") as f:
                 base = json.load(f)
         except Exception as e:
-            print(f"  ⚠️ ouge_base.json 加载失败({e})，回退为最小结构")
+            print(f"  � 锔 ouge_base.json � 杞藉け璐�({e})锛��üü涓烘ü灏缁�")
             base = {"spider": "", "sites": [], "parses": []}
         cfg = dict(base)
         cfg["name"] = cfg_name
@@ -229,45 +230,45 @@ def main():
     hktwmo_count = count_channels("hktwmo.m3u")
     all_count = count_channels("all.m3u")
 
-    # 每个分类一个独立配置（选线路后只显示对应分类的直播源）
-    write_live_config("live_cn.json", [make_live(f"{BRAND_NAME} · 🇨🇳 中国频道（{cn_count}）", "cn.m3u")], "中国频道")
-    write_live_config("live_cctv.json", [make_live(f"{BRAND_NAME} · 📺 央视频道（{cctv_count}）", "cctv.m3u")], "央视")
-    write_live_config("live_weishi.json", [make_live(f"{BRAND_NAME} · 📡 卫视频道（{weishi_count}）", "weishi.m3u")], "卫视")
-    write_live_config("live_local.json", [make_live(f"{BRAND_NAME} · 🏠 地方台（{local_count}）", "local.m3u")], "地方台")
-    write_live_config("live_hktwmo.json", [make_live(f"{BRAND_NAME} · 🇭🇰 港澳台（{hktwmo_count}）", "hktwmo.m3u")], "港澳台")
-    write_live_config("live_all.json", [make_live(f"{BRAND_NAME} · 🌍 全球频道（{all_count}）", "all.m3u")], "全球")
+    # 姣涓�绫讳�ü涓����缃���ü绾胯矾���剧ず瀵瑰��绫荤�存��锛
+    write_live_config("live_cn.json", [make_live(f"{BRAND_NAME} 路 ��� 涓�介��锛{cn_count}锛", "cn.m3u")], "涓�介��")
+    write_live_config("live_cctv.json", [make_live(f"{BRAND_NAME} 路 �� 澶��棰�锛{cctv_count}锛", "cctv.m3u")], "澶��")
+    write_live_config("live_weishi.json", [make_live(f"{BRAND_NAME} 路 �� ���棰�锛{weishi_count}锛", "weishi.m3u")], "���")
+    write_live_config("live_local.json", [make_live(f"{BRAND_NAME} 路 �  �版瑰帮�{local_count}锛", "local.m3u")], "�版瑰�")
+    write_live_config("live_hktwmo.json", [make_live(f"{BRAND_NAME} 路 ��� 娓�境�帮�{hktwmo_count}锛", "hktwmo.m3u")], "娓�境��")
+    write_live_config("live_all.json", [make_live(f"{BRAND_NAME} 路 � �ㄧ棰�锛{all_count}锛", "all.m3u")], "�ㄧ")
 
-    # 一站式配置：6 个直播源合成一个配置，选一条线路直播页就有全部 6 个源（最接近欧歌体验）
+    # 涓ü绔寮�缃��6 涓�存����涓ü涓�缃���ü涓ü�＄嚎璺�存�〉灏辨�ㄩ� 6 涓��锛�ü�ヨ�娆ф�浣楠锛
     all_lives = [
-        make_live(f"{BRAND_NAME} · 🇨🇳 中国频道（{cn_count}）", "cn.m3u"),
-        make_live(f"{BRAND_NAME} · 📺 央视频道（{cctv_count}）", "cctv.m3u"),
-        make_live(f"{BRAND_NAME} · 📡 卫视频道（{weishi_count}）", "weishi.m3u"),
-        make_live(f"{BRAND_NAME} · 🏠 地方台（{local_count}）", "local.m3u"),
-        make_live(f"{BRAND_NAME} · 🇭🇰 港澳台（{hktwmo_count}）", "hktwmo.m3u"),
-        make_live(f"{BRAND_NAME} · 🌍 全球频道（{all_count}）", "all.m3u"),
+        make_live(f"{BRAND_NAME} 路 ��� 涓�介��锛{cn_count}锛", "cn.m3u"),
+        make_live(f"{BRAND_NAME} 路 �� 澶��棰�锛{cctv_count}锛", "cctv.m3u"),
+        make_live(f"{BRAND_NAME} 路 �� ���棰�锛{weishi_count}锛", "weishi.m3u"),
+        make_live(f"{BRAND_NAME} 路 �  �版瑰帮�{local_count}锛", "local.m3u"),
+        make_live(f"{BRAND_NAME} 路 ��� 娓�境�帮�{hktwmo_count}锛", "hktwmo.m3u"),
+        make_live(f"{BRAND_NAME} 路 � �ㄧ棰�锛{all_count}锛", "all.m3u"),
     ]
-    write_live_config("live_all_in_one.json", all_lives, "直播总源")
+    write_live_config("live_all_in_one.json", all_lives, "�存�ü绘�")
 
-    # 4) 自建直播配置：不再加入仓库（"线路归线路，直播自己配"）
-    #    用户直接在 TVBox 直播页添加 m3u 总源即可：
-    #      http://YOUR_SERVER_IP/m3u/all.m3u   （一个源看全部：央视/卫视/地方台/港澳台/各国）
-    #      http://YOUR_SERVER_IP/m3u/cn.m3u    （国内精简版）
-    #    live_*.json 仍保留生成（供配置方式备用），但不写入 repo.json
+    # 4) ��缓�存�缃��涓�� �ヤ�搴锛"绾胯矾褰绾胯矾锛�存��繁�"锛
+    #    �ㄦ风存ュ� TVBox �存�〉娣诲  m3u �ü绘��冲��
+    #      http://YOUR_SERVER_IP/m3u/all.m3u   锛涓ü涓����ㄩ��澶��/���/�版瑰�/娓�境��/��斤�
+    #      http://YOUR_SERVER_IP/m3u/cn.m3u    锛�藉绮剧�ü�锛
+    #    live_*.json 浠淇���锛渚�缃�瑰�澶���锛浣涓��� repo.json
 
     repo_json = {
-        "name": f"📺 {BRAND_NAME} - 全能影视直播仓库",
-        "description": f"{BRAND_NAME}多仓配置（点播为主，直播请直接添加 m3u 直播源），自动测试筛选，每6小时更新",
+        "name": f"�� {BRAND_NAME} - �ㄨ藉奖瑙�存��搴",
+        "description": f"{BRAND_NAME}澶浠�缃���规�负涓伙��存���存ユ坊�  m3u �存��锛锛��ㄦ�璇绛�ü锛姣6灏�舵存�",
         "version": time.strftime("%Y-%m-%d"),
         "update_time": time.strftime("%Y-%m-%d %H:%M:%S"),
         "urls": urls
     }
 
-    # ===================== 直接写文件（服务器端） =====================
+    # ===================== �存ュ�浠讹���″ㄧ�锛 =====================
     with open("/opt/iptv/tvbox/repo.json", "w", encoding="utf-8") as f:
         f.write(json.dumps(repo_json, ensure_ascii=False, indent=2))
-    print("✅ repo.json 已更新")
+    print("� repo.json 宸叉存�")
 
-    # 更新 HTML
+    # �存� HTML
     try:
         with open("/opt/iptv/tvbox/index.html", "r", encoding="utf-8") as f:
             html = f.read()
@@ -277,19 +278,19 @@ def main():
     except Exception as e:
         print(f"HTML update error: {e}")
 
-    # ===================== 汇总输出 =====================
+    # ===================== 姹�ü昏��� =====================
     print("\n" + "=" * 70)
-    print(f"✅ TVBox 仓库已更新（{BRAND_NAME} 品牌版）")
+    print(f"� TVBox 浠搴宸叉存帮�{BRAND_NAME} ���锛")
     print("=" * 70)
-    print(f"📺 品牌名称: {BRAND_NAME}")
-    print(f"📦 可用线路: {len(urls)} 条（均为点播线路）")
-    print(f"  - 多仓: {len(multi_ok)} 条")
-    print(f"  - 单仓: {len(single_ok)} 条")
-    print(f"\n📺 直播源（TVBox 直播页直接添加，不走线路）:")
-    print(f"  - 直播总源: http://YOUR_SERVER_IP/m3u/all.m3u")
-    print(f"  - 国内精简版:      http://YOUR_SERVER_IP/m3u/cn.m3u")
-    print(f"\n🔗 多仓地址: http://YOUR_SERVER_IP/tvbox/repo.json")
-    print(f"🕐 更新时间: {repo_json['update_time']}")
+    print(f"�� ���绉�: {BRAND_NAME}")
+    print(f"�� ��ㄧ嚎璺�: {len(urls)} �★��涓虹规�嚎璺��")
+    print(f"  - 澶浠: {len(multi_ok)} ��")
+    print(f"  - �浠: {len(single_ok)} ��")
+    print(f"\n�� �存��锛TVBox �存�〉�存ユ坊� 锛涓璧扮嚎璺��:")
+    print(f"  - �存�ü绘�: http://YOUR_SERVER_IP/m3u/all.m3u")
+    print(f"  - �藉绮剧�ü�:      http://YOUR_SERVER_IP/m3u/cn.m3u")
+    print(f"\n� 澶浠�板ü: http://YOUR_SERVER_IP/tvbox/repo.json")
+    print(f"� �存版堕�: {repo_json['update_time']}")
 
 
 if __name__ == "__main__":
