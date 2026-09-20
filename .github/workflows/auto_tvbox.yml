@@ -1,0 +1,38 @@
+name: Auto Update TVBox Repo
+
+on:
+  schedule:
+    - cron: "0 0,12 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-repo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出仓库代码
+        uses: actions/checkout@v4
+
+      - name: 配置 Python 环境
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: 修复依赖与路径
+        run: |
+          mkdir -p m3u txt logs reports
+          sed -i "s|/opt/iptv/||g" scripts/*.py || true
+
+      - name: 运行并发测活与多仓更新
+        run: |
+          python3 scripts/update_repo_v4_server.py
+
+      - name: 自动提交更新至仓库
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Actions"
+          git add tvbox/repo.json tvbox/config.json || true
+          git commit -m "chore: 自动测活更新 TVBox 存活线路 [skip ci]" || echo "无线路变动"
+          git push
