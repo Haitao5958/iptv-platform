@@ -1,8 +1,8 @@
 {
   "name": "📺  - 全能影视直播仓库",
   "description": "多仓配置（点播为主，直播请直接添加 m3u 直播源），自动测试筛选，每6小时更新",
-  "version": "2026-10-17",
-  "update_time": "2026-10-17 15:12:30",
+  "version": "2026-10-18",
+  "update_time": "2026-10-18 03:38:25",
   "urls": [
     {
       "name": "🏬 小盒子多仓",
@@ -13,16 +13,12 @@
       "url": "http://xmbjm.fh4u.org/dc.txt"
     },
     {
-      "name": "🎬 小盒子4K",
-      "url": "http://xhztv.top/4k.json"
-    },
-    {
       "name": "🎬 欧歌",
       "url": "https://xn--anna-wn6lw489o.v.nxog.top/m/"
     },
     {
-      "name": "🎬 苹果CMS",
-      "url": "https://pastebin.com/raw/gtbKvnE1"
+      "name": "🎬 小盒子4K",
+      "url": "http://xhztv.top/4k.json"
     },
     {
       "name": "🎬 刘备",
@@ -33,18 +29,6 @@
       "url": "http://xhztv.top/xhz"
     },
     {
-      "name": "🎬 香雅情",
-      "url": "https://ghfast.top/https://raw.githubusercontent.com/xyq254245/xyqonlinerule/main/XYQTVBox.json"
-    },
-    {
-      "name": "🎬 宝盒VIP",
-      "url": "https://ghfast.top/https://raw.githubusercontent.com/guot55/YGBH/main/vip2.json"
-    },
-    {
-      "name": "🎬 dxawi",
-      "url": "https://ghfast.top/https://raw.githubusercontent.com/dxawi/0/main/0.json"
-    },
-    {
       "name": "🎬 CandyMuj",
       "url": "https://tv.520993.xyz/candymuj.json"
     },
@@ -53,12 +37,40 @@
       "url": "https://tv.520993.xyz/candymuj1.json"
     },
     {
+      "name": "🎬 dxawi",
+      "url": "https://ghfast.top/https://raw.githubusercontent.com/dxawi/0/main/0.json"
+    },
+    {
+      "name": "🎬 饭太硬",
+      "url": "http://www.饭太硬.net/tv"
+    },
+    {
+      "name": "🎬 香雅情",
+      "url": "https://ghfast.top/https://raw.githubusercontent.com/xyq254245/xyqonlinerule/main/XYQTVBox.json"
+    },
+    {
+      "name": "🎬 宝盒VIP",
+      "url": "https://ghfast.top/https://raw.githubusercontent.com/guot55/YGBH/main/vip2.json"
+    },
+    {
+      "name": "🎬 苹果CMS",
+      "url": "https://pastebin.com/raw/gtbKvnE1"
+    },
+    {
+      "name": "🎬 HG接口",
+      "url": "https://api.hgyx.vip/hgyx.json"
+    },
+    {
       "name": "🎬 英雄",
       "url": "https://ghfast.top/https://raw.githubusercontent.com/xuexuguang/tvbox_spider/main/tv/kk/heroaku_dtes.json"
     },
     {
       "name": "🎬 东篱线路",
       "url": "https://ghfast.top/https://raw.githubusercontent.com/chitue/dongliTV/main/api.json"
+    },
+    {
+      "name": "🎬 真心",
+      "url": "https://www.252035.xyz/z/FongMi.json"
     },
     {
       "name": "🎬 tvyuan全量版",
@@ -77,10 +89,6 @@
       "url": "https://www.yingm.cc/dm/dm.json"
     },
     {
-      "name": "🎬 饭太硬",
-      "url": "http://www.饭太硬.net/tv"
-    },
-    {
       "name": "🎬 肥猫",
       "url": "http://肥猫.net"
     },
@@ -89,16 +97,8 @@
       "url": "http://ztha.top/TVBox/thdjk.json"
     },
     {
-      "name": "🎬 真心",
-      "url": "https://www.252035.xyz/z/FongMi.json"
-    },
-    {
       "name": "🎬 L佬线路",
       "url": "https://android.lushunming.qzz.io/json/index.json"
-    },
-    {
-      "name": "🎬 HG接口",
-      "url": "https://api.hgyx.vip/hgyx.json"
     }
   ]
 }
